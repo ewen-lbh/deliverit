@@ -6,6 +6,7 @@ Usage:
 Options:
     -y --yes                   Don't ask for confirmation before each step
     --verbose                  Show more info
+    --debug                    Show even more info
     --dry-run                  Don't actually run commands
     --config-file=FILEPATH     Path to the configuration file.
     -! --disable-step=STEP_ID  Disables the step with id STEP_ID. See Step IDs
@@ -31,6 +32,10 @@ Placeholders: (available to *-marked options)
     {owner} is the repository's owner name (or the organization's name).
     {repo_url} is the repository's full URL
 """
+# TODO: custom commands
+# TODO: rename version_declarations: to codemods:
+# TODO: codemods.in: support glob patterns
+
 from urllib.parse import urlparse
 from deliverit.changelog import get_release_notes_for_version
 from deliverit.version import Version, get_current_version_from_git_tag
@@ -57,43 +62,27 @@ import deliverit.manifest_file
 import deliverit.config
 import deliverit.changelog
 import deliverit.version_declaration
+import deliverit.dotenv
 from deliverit.git import has_git_remote
 from deliverit.config import ConfigurationError
 from deliverit.ui import *
 from deliverit.step import make_step_function
 
 
-MESSAGE_NO_VALID_DOTENV_FILE = """\
-Add a .env file to this directory with the following contents:
-
-    GITHUB_TOKEN="your github personnal access token"
-    PYPI_USERNAME="your PyPI account username"
-    PYPI_PASSWORD="your PyPI account's password"
-
-⚠ MAKE SURE TO .GITIGNORE THIS FILE BEFORE RUNNING THE COMMAND AGAIN.
-  IF THIS FILE IS NOT IGNORED, IT COULD BE UPLOADED, AND ACCESS TO YOUR
-  GITHUB *AND* PYPI ACCOUNTS WOULD BE MADE PUBLIC
-"""
-
-
 def run():
     # Init some variables
     args = docopt(__doc__)
     ctx = Context()
+    ctx.debugging = args["--debug"]
 
     # Check for dotenv file & load variables
-    if not Path(".env").is_file():
-        raise FileNotFoundError(MESSAGE_NO_VALID_DOTENV_FILE)
-    load_dotenv(".env")
-    if not all(
-        (getenv("GITHUB_TOKEN"), getenv("PYPI_USERNAME"), getenv("PYPI_PASSWORD"))
-    ):
-        raise ValueError(MESSAGE_NO_VALID_DOTENV_FILE)
+    deliverit.dotenv.load(ctx)
 
     # read config file
     config_filepath = args["--config-file"] or (
         ".deliverit.yaml" if Path(".deliverit.yaml").is_file() else ".deliverit.yml"
     )
+
     config = deliverit.config.load(
         config_filepath, cli_args=args, has_git_remote=has_git_remote()
     )
@@ -111,19 +100,19 @@ def run():
     ctx.old_version = ctx.old_version or get_current_version_from_git_tag(
         tag_template=config.tag_name, fallback_version=Version(0, 1, 0)
     )
-    package_name = ctx.package_name or config.package_name
-    if package_name is None:
+    ctx.package_name = ctx.package_name or config.package_name
+    if ctx.package_name is None:
         raise ConfigurationError(
             "Could not detect the package name. Set it explicitly with package_name"
         )
-    repository_url = ctx.repository_url or config.repository_url
-    if repository_url is None:
+    ctx.repository_url = ctx.repository_url or config.repository_url
+    if ctx.repository_url is None:
         raise ConfigurationError(
             "Could not detect the github repository's URL. Set it explicitly with repository_url"
         )
 
     # Check if repository is hosted on github
-    if not is_hosted_on_github(repository_url):
+    if not is_hosted_on_github(ctx.repository_url):
         raise NotImplementedError("Your repository is not hosted on github")
 
     # Get the repository name
@@ -146,13 +135,8 @@ def run():
         raise ValueError("No version bump specified.")
     ctx.new_version = ctx.old_version.bump(ctx.version_bump)
 
-    # Make placeholder maps
-
     # Compute some configurable values
     version_tag = config.tag_name.format(new=ctx.new_version)
-    commit_message = (
-        ctx.apply(config.commit_message) if config.commit_message is not None else None
-    )
 
     # Log info
     print(
@@ -212,7 +196,7 @@ Releasing a new {em(ctx.version_bump)} version!
     step(
         "git_commit",
         "Commit the version bump",
-        command=("git", "commit", "-m", commit_message),
+        command=("git", "commit", "-m", ctx.apply(config.commit_message)),
     )
 
     # Add tag to commit
@@ -231,7 +215,7 @@ Releasing a new {em(ctx.version_bump)} version!
             version_tag,
             latest_commit_hash,
             "-m",
-            commit_message,
+            ctx.apply(config.commit_message),
         ),
     )
 
@@ -264,7 +248,7 @@ Releasing a new {em(ctx.version_bump)} version!
 
     # Get the release notes
     release_notes = get_release_notes_for_version(
-        new_version, Path(config.changelog).read_text("utf-8")
+        ctx.new_version, Path(config.changelog).read_text("utf-8")
     )
 
     release = step(
