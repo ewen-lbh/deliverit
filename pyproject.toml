@@ -5,7 +5,7 @@ license = "MIT"
 name = "deliverit"
 readme = "README.md"
 repository = "https://github.com/ewen-lbh/deliverit"
-version = "0.0.0"
+version = "0.1.0"
 
 [tool.poetry.scripts]
 deliverit = "deliverit.deliverit:run"
