@@ -1,0 +1,42 @@
+language: go
+manifest files: []
+package name: portfoliodb
+
+commit message: 🔖 Release {new}
+tag name: v{new}
+milestone title: Release v{new}
+
+release title: '{new}'
+release assets:
+  - label: Tarball for {new}
+    file: dist/portfoliodb-v{new}.tar.gz
+    create with: tar -cvzf dist/portfoliodb-v{new}.tar.gz ./
+    delete after: yes
+
+  - label: Compiled binary for {new}
+    file: dist/portfoliodb-{new}
+    create with:
+      - make
+      - mv portfoliodb dist/portfoliodb-{new}
+    delete after: no
+
+changelog: CHANGELOG.md
+
+version declarations:
+  - in: portfoliodb.go
+    search: ^PortfoliodbVersion = "(.+)"$
+    replace: PortfoliodbVersion = "{new}"
+
+steps:
+  update_changelog: on
+  update_code_version: on
+  bump_manifest_version: off # Already off because manifest files is empty
+  git_add: on
+  git_commit: on
+  git_tag: on
+  git_push: on
+  build_for_registry: off # Already off because language=go and registry not declared
+  publish_to_registry: off # Already off because build_for_registry is off
+  create_github_release: on
+  add_assets_to_github_release: on
+  close_milestone: on

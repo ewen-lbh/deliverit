@@ -1,0 +1,40 @@
+language: python
+manifest files:
+  - pyproject.toml
+
+registry: pypi.org # default for language=python
+
+commit message: 🔖 Release {new}
+tag name: v{new}
+milestone title: '{new}'
+
+release title: '{new}'
+release assets:
+  - type: source code tarball
+    label: Tarball for {new}
+    file: dist/{package}-{new}.tar.gz
+
+  - type: python wheel
+    label: Python wheel for {new}
+    file: dist/{package}-{new}-py3-none-any.whl
+
+changelog: CHANGELOG.md
+
+version declarations:
+  - in: "{package}/__init__.py"
+    search: ^__version__ = (["'])(.+)\1$
+    replace: __version__ = "{new}"
+
+steps:
+  update_changelog: on
+  update_code_version: on
+  bump_manifest_version: on
+  git_add: on
+  git_commit: on
+  git_tag: on
+  git_push: on
+  build_for_registry: poetry build # default for manifest_file=pyproject.toml
+  publish_to_registry: poetry publish --username $PYPI_USERNAME --password $PYPI_PASSWORD # default for manifest_file=pyproject.toml
+  create_github_release: on # default for release_title=(not empty)
+  add_assets_to_github_release: on # default for create_github_release=true
+  close_milestone: on # default for milestone_title=(not empty)

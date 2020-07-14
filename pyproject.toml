@@ -1,0 +1,33 @@
+[tool.poetry]
+authors = ["Ewen Le Bihan <ewen.lebihan7@gmail.com>"]
+description = "Makes releasing versions a breeze."
+license = "MIT"
+name = "deliverit"
+readme = "README.md"
+repository = "https://github.com/ewen-lbh/deliverit"
+version = "0.1.0"
+
+[tool.poetry.scripts]
+deliverit = "deliverit.deliverit:run"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+docopt = "^0.6.2"
+chachacha = {git = "https://github.com/ewen-lbh/chachacha"}
+pygithub = "^1.51"
+python-dotenv = "^0.13.0"
+termcolor = "^1.1.0"
+toml = "^0.10.1"
+pyyaml = "^5.3.1"
+parse = "^1.15.0"
+recordclass = "^0.13.2"
+
+[tool.poetry.dev-dependencies]
+black = {version = "^19.10b0", allow-prereleases = true}
+pylint = "^2.5.3"
+rope = "^0.17.0"
+pydeps = "^1.9.3"
+
+[build-system]
+build-backend = "poetry.masonry.api"
+requires = ["poetry>=0.12"]

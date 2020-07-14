@@ -1,0 +1,34 @@
+language: javascript
+manifest files:
+  - package.json # default for language=javascript
+
+registry: npmjs.com # default for language=javascript
+
+commit message: 🔖 Release {new} # default is "Release {new}"
+tag name: v{new} # default
+milestone title: Release {new}
+
+release title: '{new}'
+release assets:
+  - type: source code tarball
+    label: Tarball for {new}
+    file: dist/{package}-{new}.tar.gz
+    create with: tar -cvzf dist/{package}-{new}.tar.gz ./
+    delete after: yes
+
+changelog: CHANGELOG.md # default
+version declarations: []
+
+steps:
+  update_changelog: on # default for changelog != null
+  update_code_version: off # default for version_declarations is empty
+  bump_manifest_version: pnpm version {bump} # default for language=javascript and manifest_file=package.json is npm version {bump}
+  git_add: on # default for commit message != null
+  git_commit: on # default for git_add=true
+  git_tag: on # default for tag_name != null
+  git_push: on # default for (extracted from manifest)repository != null
+  build_for_registry: off # can also be sth like npm run build
+  publish_to_registry: pnpm publish dist/{package}-{new}.tar.gz # default for language=javascript is npm publish dist/{package}-{new}.tar.gz
+  create_github_release: on # default for release_title=(not empty)
+  add_assets_to_github_release: on # default for create_github_release=true and release_assets=(not empty)
+  close_milestone: on # default for milestone_title=(not empty)

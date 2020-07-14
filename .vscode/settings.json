@@ -1,0 +1,4 @@
+{
+    "python.formatting.provider": "black",
+    "python.pythonPath": "/home/ewen/.cache/pypoetry/virtualenvs/deliverit-XKlo2C0U-py3.7/bin/python"
+}
