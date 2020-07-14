@@ -12,6 +12,7 @@ from recordclass import RecordClass
 
 from deliverit.version import Version
 
+
 class ManifestInfoExtractor:
     def __init__(self, fileobj: "IO[Any]", filepath: str) -> None:
         self._parse(fileobj, filepath)
@@ -107,9 +108,7 @@ class SetupCFG(ManifestInfoExtractor):
 
     @property
     def old_version(self) -> Version:
-        return Version.parse(
-            self._read_value(self.parsed["metadata"].get("version"))
-        )
+        return Version.parse(self._read_value(self.parsed["metadata"].get("version")))
 
     @property
     def package_name(self) -> str:

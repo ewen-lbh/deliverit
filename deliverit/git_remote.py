@@ -11,21 +11,26 @@ import deliverit.config
 from deliverit.context import Context
 from deliverit.ui import *
 
+
 def is_hosted_on_github(repository_url: str) -> bool:
     """
     Checks if the repository at repository_url is hosted on github.com
     """
     return urlparse(repository_url).netloc == "github.com"
 
+
 def split_repository_name(repository_url: str) -> Tuple[str, str]:
     """
     Splits "owner/repo" into owner and repo
     """
-    repository_full_name = urlparse(repository_url).path[1:] # remove initial slash
-    parts = repository_full_name.split('/')
+    repository_full_name = urlparse(repository_url).path[1:]  # remove initial slash
+    parts = repository_full_name.split("/")
     if len(parts) != 2:
-        raise ValueError(f"The repository full name {repository_full_name!r} could not be split into OWNER/REPO")
+        raise ValueError(
+            f"The repository full name {repository_full_name!r} could not be split into OWNER/REPO"
+        )
     return tuple(parts)
+
 
 def close_milestone(ctx: Context, gh: github.Github, title: str):
     repo = gh.get_repo(ctx.repository_full_name)
@@ -36,12 +41,9 @@ def close_milestone(ctx: Context, gh: github.Github, title: str):
     else:
         print(warn(f"No milestone with title {title!r} found"))
 
+
 def create_github_release(
-    ctx: Context,
-    gh: github.Github,
-    tag_name: str,
-    title: str,
-    message: str,
+    ctx: Context, gh: github.Github, tag_name: str, title: str, message: str,
 ) -> github.GitRelease.GitRelease:
     repo = gh.get_repo(ctx.repository_full_name)
     release = repo.create_git_release(tag=tag_name, name=title, message=message)
@@ -53,8 +55,8 @@ def upload_assets_to_release(
     release: github.GitRelease.GitRelease,
     assets: List[deliverit.config.ReleaseAsset],
 ):
+    # TODO: handle delete_after: and create_with:
     for asset in assets:
-        release.upload_asset(
-            ctx.apply(asset.file),
-            label=ctx.apply(asset.label)
-        )
+        file = ctx.apply(asset.file)
+        label = ctx.apply(asset.label)
+        release.upload_asset(file, label=label)

@@ -9,8 +9,8 @@ from deliverit.ui import MESSAGE_NO_VALID_DOTENV_FILE
 
 
 def load(ctx: Context):
-    #TODO: configurable .env filepath thru credentials: 
-    #that's why `ctx` is passed
+    # TODO: configurable .env filepath thru credentials:
+    # that's why `ctx` is passed
     if not Path(".env").is_file():
         raise FileNotFoundError(MESSAGE_NO_VALID_DOTENV_FILE)
 

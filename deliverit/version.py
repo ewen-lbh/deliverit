@@ -8,34 +8,36 @@ from parse import parse
 
 from deliverit.ui import *
 
+
 class Version:
     def __init__(self, major: int, minor: int, patch: int) -> None:
         self.major, self.minor, self.patch = major, minor, patch
 
     @classmethod
-    def parse(cls, version_str: str) -> 'Version':
+    def parse(cls, version_str: str) -> "Version":
         """
         Returns a 'Version' instance from a "X.Y.Z" string
         """
-        return cls(*map(int, version_str.split('.')))
+        return cls(*map(int, version_str.split(".")))
 
     def __str__(self) -> str:
         return f"{self.major}.{self.minor}.{self.patch}"
 
-    def bump(self, bump: str) -> 'Version':
+    def bump(self, bump: str) -> "Version":
         """
         Returns a bumped version of itself bumped
         by a `bump` bump (can be "major", "minor" or "patch")
         """
         if bump == "major":
-            return Version(self.major+1, self.minor, self.patch)
+            return Version(self.major + 1, self.minor, self.patch)
         if bump == "minor":
-            return Version(self.major, self.minor+1, self.patch)
+            return Version(self.major, self.minor + 1, self.patch)
         if bump == "patch":
-            return Version(self.major, self.minor, self.patch+1)
+            return Version(self.major, self.minor, self.patch + 1)
 
         raise ValueError("bump must be one of 'major', 'minor' or 'patch'")
-        
+
+
 def get_current_version_from_git_tag(
     tag_template: str, fallback_version: Version
 ) -> Optional[Version]:

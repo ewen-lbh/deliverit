@@ -27,9 +27,7 @@ def get_release_notes_for_version(version: Version, changelog_contents: str) -> 
     return "\n".join(release_notes_lines)
 
 
-def update(
-    ctx: Context, changelog_path: str,tag_template: str
-):
+def update(ctx: Context, changelog_path: str, tag_template: str):
     changelog = ChangelogFormat(changelog_path)
     if not Path(changelog_path).is_file():
         changelog.init()

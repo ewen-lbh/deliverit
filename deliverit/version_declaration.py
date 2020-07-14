@@ -5,6 +5,7 @@ from pathlib import Path
 from deliverit.context import Context
 import deliverit.config
 
+
 def update(
     ctx: Context, declaration: deliverit.config.VersionDeclaration,
 ):
