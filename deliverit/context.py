@@ -1,8 +1,13 @@
 from typing import *
+from os.path import expandvars
+import time
+from math import floor
+from termcolor import cprint
 
 from recordclass import RecordClass
 
 from deliverit.version import Version
+
 
 class Context(RecordClass):
     package_name: Optional[str] = None
@@ -13,14 +18,20 @@ class Context(RecordClass):
     new_version: Optional[Version] = None
     old_version: Optional[Version] = None
     version_bump: Optional[str] = None
+    debugging: bool = False
 
-    def apply(self, format_str: Optional[str]) -> str:
+    def debug(self, message: str):
+        if self.debugging:
+            timestamp = str(time.time() - floor(time.time())).replace("0.", ".")
+            cprint(f"[[{timestamp:0<18}]] {message}", attrs=("dark",))
+
+    def apply(self, format_str: Optional[str], env_aware: bool = True) -> str:
         """
         Replaces placeholders in format_str
         """
         if format_str is None:
             return ""
-        return format_str.format(
+        applied = format_str.format(
             package=self.package_name,
             repo_url=self.repository_url,
             repo_full=self.repository_full_name,
@@ -30,3 +41,10 @@ class Context(RecordClass):
             old=self.old_version,
             bump=self.version_bump,
         )
+        if not env_aware:
+            self.debug(f"ctx.apply[] {format_str!r}~>{applied!r}")
+            return applied
+
+        applied = expandvars(applied)
+        self.debug(f"ctx.apply[env_aware] {format_str!r}~>{applied!r}")
+        return applied
