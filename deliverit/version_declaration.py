@@ -1,5 +1,6 @@
 import re
-from typing import *
+from __future__ import annotations
+from typing import Union, Optional, Any
 from pathlib import Path
 
 from deliverit.context import Context

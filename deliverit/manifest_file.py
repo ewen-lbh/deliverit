@@ -1,14 +1,18 @@
 """
 Extracts required info from various manifest file formats
 """
-import re
-from typing import *
-from pathlib import Path
-import json
+from __future__ import annotations
+
 import configparser
+import json
+import re
+from pathlib import Path
+from typing import Any, Optional, Union
 
 import toml
-from recordclass import RecordClass
+import xmltodict
+import yaml
+from pydantic import BaseModel
 
 from deliverit.version import Version
 
@@ -36,29 +40,42 @@ class ManifestInfoExtractor:
         """To which URL is the project's repository hosted?"""
         raise NotImplementedError("Please implement this method")
 
-
-class PyProjectTOML(ManifestInfoExtractor):
+class TOMLManifestInfoExtractor(ManifestInfoExtractor):
     def _parse(self, fileobj: "IO[Any]", filepath: str):
         self.parsed = toml.load(fileobj)
-        self.metadata = self.parsed["tool"]["poetry"]
 
+class JSONManifestInfoExtractor(ManifestInfoExtractor):
+    def _parse(self, fileobj: "IO[Any]", filepath: str):
+        self.parsed = json.load(fileobj)
+
+class YAMLManifestInfoExtractor(ManifestInfoExtractor):
+    def _parse(self, fileobj: "IO[Any]", filepath: str):
+        self.parsed = yaml.load(fileobj.read().decode("utf-8"), Loader=yaml.SafeLoader)
+
+class XMLManifestInfoExtractor(ManifestInfoExtractor):
+    def _parse(self, fileobj: "IO[Any]", filepath: str):
+        self.parsed = xmltodict.parse(fileobj.read().decode("utf-8"))
+
+class INIManifestInfoExtractor(ManifestInfoExtractor):
+    def _parse(self, fileobj: "IO[Any]", filepath: str):
+        self.parsed = configparser.ConfigParser()
+        self.parsed.read_file(fileobj)
+
+class PyProjectTOML(TOMLManifestInfoExtractor):
     @property
     def old_version(self) -> Version:
-        return Version.parse(self.metadata["version"])
+        return Version.parse(self.parsed["tool"]["poetry"]["version"])
 
     @property
     def package_name(self) -> str:
-        return self.metadata["name"].replace("-", "_")
+        return self.parsed["tool"]["poetry"]["name"].replace("-", "_")
 
     @property
     def repository_url(self) -> Optional[str]:
-        return self.metadata.get("repository")
+        return self.parsed["tool"]["poetry"].get("repository")
 
 
-class PackageJSON(ManifestInfoExtractor):
-    def _parse(self, fileobj: "IO[Any]", filepath: str):
-        self.parsed: dict = json.load(fileobj)
-
+class PackageJSON(JSONManifestInfoExtractor):
     @property
     def old_version(self) -> Version:
         return Version.parse(self.parsed["version"])
@@ -93,16 +110,15 @@ class PackageJSON(ManifestInfoExtractor):
         return None
 
 
-class SetupCFG(ManifestInfoExtractor):
-    def _parse(self, fileobj: "IO[Any]", filepath: str):
-        self.parsed = configparser.ConfigParser()
-        self.parsed.read_file(fileobj)
-
+class SetupCFG(INIManifestInfoExtractor):
     def _read_value(self, value: str) -> str:
         """Seems like values in setup.cfg can be pointers to files, handle that."""
         if value.startswith("file:"):
             filepath = value.replace("file:", "").strip()
             return Path(filepath).read_text("utf-8")
+        elif value.startswith("attr:"):
+            # TODO
+            raise NotImplementedError(f"While parsing setup.cfg: could not resolve {value!r}: attr:-values are not supported yet")
         else:
             return value
 
@@ -127,13 +143,13 @@ FILENAMES_TO_EXTRACTORS = {
 }
 
 
-class ManifestInfo(RecordClass):
+class ManifestInfo(BaseModel):
     old_version: Optional[Version]
     package_name: Optional[str]
     repository_url: Optional[str]
 
 
-def load(filepath: str) -> Tuple[Optional[Version], Optional[str], Optional[str]]:
+def load(filepath: str) -> tuple[Optional[Version], Optional[str], Optional[str]]:
     """
     Loads the manifest file using the correct extractor and returns a tuple of:
     (old_version, package_name, repository_url)

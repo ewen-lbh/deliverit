@@ -1,15 +1,16 @@
-from typing import *
+from __future__ import annotations
+from typing import Union, Optional, Any
 from os.path import expandvars
 import time
 from math import floor
 from termcolor import cprint
 
-from recordclass import RecordClass
+from pydantic import BaseModel
 
 from deliverit.version import Version
 
 
-class Context(RecordClass):
+class Context(BaseModel):
     package_name: Optional[str] = None
     repository_url: Optional[str] = None
     repository_full_name: Optional[str] = None

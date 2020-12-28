@@ -50,7 +50,8 @@ from deliverit.git import get_latest_commit_hash
 from os import getenv
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import *
+from __future__ import annotations
+from typing import Union, Optional, Any
 
 from docopt import docopt
 from dotenv import load_dotenv

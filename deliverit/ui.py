@@ -3,7 +3,8 @@ Functions related to UI
 Mostly shortcuts for termcolor
 """
 
-from typing import *
+from __future__ import annotations
+from typing import Union, Optional, Any
 import sys
 
 from termcolor import colored

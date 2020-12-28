@@ -2,14 +2,16 @@
 Functions related to changelogs
 """
 
-from deliverit.context import Context
-from deliverit.version import Version
+from __future__ import annotations
+
 from pathlib import Path
-from typing import *
+from typing import Any, Optional, Union
 
 from chachacha.drivers.kac import ChangelogFormat
 
+from deliverit.context import Context
 from deliverit.ui import *
+from deliverit.version import Version
 
 
 def get_release_notes_for_version(version: Version, changelog_contents: str) -> str:

@@ -2,7 +2,8 @@
 Functions related to Github (and planned support for Gitlab, Bitbucket,...)
 """
 
-from typing import *
+from __future__ import annotations
+from typing import Union, Optional, Any
 from urllib.parse import urlparse
 
 import github
@@ -19,7 +20,7 @@ def is_hosted_on_github(repository_url: str) -> bool:
     return urlparse(repository_url).netloc == "github.com"
 
 
-def split_repository_name(repository_url: str) -> Tuple[str, str]:
+def split_repository_name(repository_url: str) -> tuple[str, str]:
     """
     Splits "owner/repo" into owner and repo
     """
@@ -53,7 +54,7 @@ def create_github_release(
 def upload_assets_to_release(
     ctx: Context,
     release: github.GitRelease.GitRelease,
-    assets: List[deliverit.config.ReleaseAsset],
+    assets: list[deliverit.config.ReleaseAsset],
 ):
     # TODO: handle delete_after: and create_with:
     for asset in assets:

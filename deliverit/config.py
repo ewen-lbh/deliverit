@@ -1,9 +1,12 @@
-from typing import *
+from __future__ import annotations
+
 from keyword import iskeyword
 from pathlib import Path
+from typing import Any, Optional, Union
+from pydantic.utils import smart_deepcopy
 
 import yaml
-from recordclass import RecordClass
+from pydantic import BaseModel
 
 BASE_DEFAULTS = {
     "language": None,
@@ -82,7 +85,7 @@ LANGUAGE_BASED_DEFAULTS = {
 }
 
 
-class Steps(RecordClass):
+class Steps(BaseModel):
     update_changelog: Union[bool, str] = True
     update_code_version: Union[bool, str] = True
     bump_manifest_version: str = ""
@@ -98,20 +101,20 @@ class Steps(RecordClass):
     close_milestone: Union[bool, str] = True
 
 
-class VersionDeclaration(RecordClass):
+class VersionDeclaration(BaseModel):
     in_: str
     search: str
     replace: str
 
 
-class ReleaseAsset(RecordClass):
+class ReleaseAsset(BaseModel):
     file: str = "{package}-{new}.tar.gz"
     label: Optional[str] = None
     create_with: Optional[str] = None
     delete_after: Optional[str] = None
 
 
-class Configuration(RecordClass):
+class Configuration(BaseModel):
     language: Optional[str]
     package_name: Optional[str]
     manifest_file: Optional[str]
@@ -121,16 +124,16 @@ class Configuration(RecordClass):
     tag_name: Optional[str]
     milestone_title: Optional[str]
     release_title: Optional[str]
-    release_assets: List[ReleaseAsset]
     changelog: Optional[str]
-    version_declarations: List[VersionDeclaration]
+    release_assets: list[ReleaseAsset]
+    version_declarations: list[VersionDeclaration]
     steps: Steps
 
 
 def resolve_defaults_steps(
-    config: Dict[str, Any], has_git_remote: bool
-) -> Dict[str, Union[bool, str]]:
-    default_steps: Dict[str, Union[bool, str]] = {
+    config: dict[str, Any], has_git_remote: bool
+) -> dict[str, Union[bool, str]]:
+    default_steps: dict[str, Union[bool, str]] = {
         "update_changelog": False,
         "update_code_version": False,
         "bump_manifest_version": False,
@@ -183,8 +186,8 @@ def resolve_defaults_steps(
     return default_steps
 
 
-def sanitize_keys(o: Dict[str, Any]) -> Dict[str, Any]:
-    sanitized_dict: Dict[str, Any] = {}
+def sanitize_keys(o: dict[str, Any]) -> dict[str, Any]:
+    sanitized_dict: dict[str, Any] = {}
     for key, value in o.items():
         key = key.replace(" ", "_")
         if iskeyword(key):
@@ -197,7 +200,7 @@ def sanitize_keys(o: Dict[str, Any]) -> Dict[str, Any]:
     return sanitized_dict
 
 
-def apply_defaults(user_config: Dict[str, Any], has_git_remote: bool) -> Dict[str, Any]:
+def apply_defaults(user_config: dict[str, Any], has_git_remote: bool) -> dict[str, Any]:
     config = {
         **BASE_DEFAULTS,
         **LANGUAGE_BASED_DEFAULTS[user_config["language"]],
@@ -212,18 +215,26 @@ def apply_defaults(user_config: Dict[str, Any], has_git_remote: bool) -> Dict[st
     return config
 
 
-def _to_recordclasses(config: Dict[str, Any]) -> Configuration:
+def _to_models(config: dict[str, Any]) -> Configuration:
     config["release_assets"] = [ReleaseAsset(**i) for i in config["release_assets"]]
     config["steps"] = Steps(**config["steps"])
     config["version_declarations"] = [
-        VersionDeclaration(**i) for i in config["version_declarations"]
+        VersionDeclaration(**i) for i in _remove_trailing_underscore_from_keys(config["version_declarations"])
     ]
     return Configuration(**config)
 
+def _remove_trailing_underscore_from_keys(o: dict[str, Any]) -> dict[str, Any]:
+    new_dict = smart_deepcopy(o)
+    for key, value in o.items():
+        if isinstance(value, dict):
+            value = _remove_trailing_underscore_from_keys(value)
+        new_dict[key.removesuffix("_")] = value
+    return new_dict
+
 
 def override_with_cli_args(
-    config: Dict[str, Any], cli_args: Dict[str, Any]
-) -> Dict[str, Any]:
+    config: dict[str, Any], cli_args: dict[str, Any]
+) -> dict[str, Any]:
     for key, value in cli_args.items():
         config_key = key.replace("--", "").replace("-", "_")
         if config_key in BASE_DEFAULTS.keys() and value is not None:
@@ -235,17 +246,17 @@ def override_with_cli_args(
 
 
 def load(
-    filepath: str, cli_args: Dict[str, Any], has_git_remote: bool
+    filepath: str, cli_args: dict[str, Any], has_git_remote: bool
 ) -> Configuration:
     if not Path(filepath).exists():
-        return _to_recordclasses(resolve_defaults_steps(BASE_DEFAULTS, has_git_remote))
+        return _to_models(resolve_defaults_steps(BASE_DEFAULTS, has_git_remote))
 
     config = Path(filepath).read_text(encoding="utf-8")
     config = yaml.load(config, Loader=yaml.SafeLoader)
     config = sanitize_keys(config)
     config = apply_defaults(config, has_git_remote)
     config = override_with_cli_args(config, cli_args)
-    return _to_recordclasses(config)
+    return _to_models(config)
 
 
 class ConfigurationError(Exception):

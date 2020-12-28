@@ -2,7 +2,8 @@
 Functions related to git
 """
 
-from typing import *
+from __future__ import annotations
+from typing import Union, Optional, Any
 import subprocess
 
 

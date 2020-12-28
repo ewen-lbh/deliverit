@@ -1,4 +1,5 @@
-from typing import *
+from __future__ import annotations
+from typing import Union, Optional, Any
 import subprocess
 from os import getenv
 
@@ -7,14 +8,14 @@ from deliverit.ui import *
 
 
 def make_step_function(
-    args: Dict[str, Any], config: deliverit.config.Configuration
+    args: dict[str, Any], config: deliverit.config.Configuration
 ) -> Callable:
     def step(
         id: str,
         message: str,
         action: Optional[Callable] = None,
-        command: Optional[Union[str, Tuple[str]]] = None,
-        commands: Optional[List[Union[str, Tuple[str]]]] = None,
+        command: Optional[Union[str, tuple[str]]] = None,
+        commands: Optional[list[Union[str, tuple[str]]]] = None,
         cancellable: bool = True,
         nonzero_ok: bool = False,
     ) -> Any:

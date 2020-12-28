@@ -1,7 +1,8 @@
 """
 Functions related to version operations
 """
-from typing import *
+from __future__ import annotations
+from typing import Union, Optional, Any
 import subprocess
 from subprocess import CalledProcessError
 from parse import parse
