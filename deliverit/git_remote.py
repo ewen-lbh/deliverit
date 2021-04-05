@@ -47,8 +47,7 @@ def create_github_release(
     ctx: Context, gh: github.Github, tag_name: str, title: str, message: str,
 ) -> github.GitRelease.GitRelease:
     repo = gh.get_repo(ctx.repository_full_name)
-    release = repo.create_git_release(tag=tag_name, name=title, message=message)
-    return release
+    return repo.create_git_release(tag=tag_name, name=title, message=message)
 
 
 def upload_assets_to_release(
