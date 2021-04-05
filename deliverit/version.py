@@ -55,13 +55,13 @@ def get_current_version_from_git_tag(
     except CalledProcessError:
         print(red("Could not get the current version from git tags"))
         return fallback_version
-    if stderr.startswith("fatal: No names found"):
-        print(
-            warn(
-                "No git tags found, can't determine current version. "
-                f"Assuming a initial version of v{em(fallback_version)}"
-            )
-        )
-        return fallback_version
-    else:
+    if not stderr.startswith("fatal: No names found"):
         return Version.parse(parse(tag_template, stdout).named["new"])
+
+    print(
+        warn(
+            "No git tags found, can't determine current version. "
+            f"Assuming a initial version of v{em(fallback_version)}"
+        )
+    )
+    return fallback_version

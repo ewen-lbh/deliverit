@@ -89,11 +89,7 @@ class PackageJSON(JSONManifestInfoExtractor):
         repo = self.parsed.get("repository")
         if repo is None:
             return None
-        if type(repo) is dict:
-            url = repo.get("url")
-        else:
-            url = repo
-
+        url = repo.get("url") if type(repo) is dict else repo
         if url is None:
             return None
 
